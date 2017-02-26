@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="sort_values">
+        <item>popularity</item>
+        <item>price</item>
+        <item>score</item>
+        <item>company_opinions</item>
+        <item>product_opinions</item>
+    </string-array>
+
+    <string-array name="sort_ids">
+        <item>популяности</item>
+        <item>цене</item>
+        <item>количесву продаж</item>
+        <item>оценке компании</item>
+        <item>оценке продукта</item>
+    </string-array>
+
+</resources>
