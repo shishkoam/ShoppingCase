@@ -69,10 +69,6 @@ abstract public class ProductsActivity extends AppCompatActivity implements Cons
     }
 
     //saving search string if opened
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -119,7 +115,7 @@ abstract public class ProductsActivity extends AppCompatActivity implements Cons
         builder.show();
     }
 
-    void saveSearchText(String searchText) {
+    private void saveSearchText(String searchText) {
         SharedPreferences sPref = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = sPref.edit();
         ed.putString(SEARCH, searchText);

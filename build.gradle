@@ -21,3 +21,28 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+//ext {
+//    compileSdkVersion = 25
+//    buildToolsVersion = '25.0.2'
+//    apolloVersion = '0.2.1'
+//
+//    dep = [
+//            androidPlugin: 'com.android.tools.build:gradle:2.3.0-beta3',
+//            apolloPlugin: "com.apollographql.android:gradle-plugin:$apolloVersion",
+//            apolloConverter: "com.apollographql.android:converter:$apolloVersion",
+//            retrofit: 'com.squareup.retrofit2:retrofit:2.1.0']
+//}
+//
+//subprojects {
+//    buildscript {
+//        repositories {
+//            jcenter()
+//            maven { url "https://jitpack.io" }
+//            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+//        }
+//    }
+//    repositories {
+//        jcenter()
+//        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+//    }
+//}

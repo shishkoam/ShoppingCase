@@ -5,5 +5,5 @@ package com.yo.shishkoam.simplepromclient.adapters;
  */
 
 public enum ProductLayoutType {
-    Linear, Grid;
+    Linear, Grid
 }

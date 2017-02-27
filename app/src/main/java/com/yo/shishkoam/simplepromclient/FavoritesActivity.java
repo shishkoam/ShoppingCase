@@ -28,7 +28,7 @@ public class FavoritesActivity extends ProductsActivity {
     protected void initProductsRecyclerView() {
         ProductLayoutType type = getRecyclerViewType(productsRecyclerView);
         ArrayList<Result> productList = new ArrayList(FavoritesManager.INSTANCE.getFavoriteProducts());
-        ProductsRVAdapter adapter = new ProductsRVAdapter(productList, type);
+        ProductsRVAdapter adapter = new ProductsRVAdapter(this, productList, type);
         productsRecyclerView.setAdapter(adapter);
         productsRecyclerView.setItemAnimator(new SlideInUpAnimator());
     }

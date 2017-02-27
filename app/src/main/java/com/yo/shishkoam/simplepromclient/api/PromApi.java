@@ -10,11 +10,17 @@ import retrofit2.http.Query;
  * Created by User on 21.02.2017
  */
 public interface PromApi {
+//
+//    @POST("/_/graph/request")
+//    Call<ProductsModel> getProducts(@Query("limit") int limit,
+//                                    @Query("offset ") int offset,
+//                                    @Query("category") long category,
+//                                    @Query("sort") String sortType,
+//                                    @Body RequestBody params);
 
     @POST("/_/graph/request")
     Call<ProductsModel> getProducts(@Query("limit") int limit,
-                                    @Query("offset ") int offset,
-                                    @Query("category") long category,
-                                    @Query("sort") String sortType);
-
+                                                @Query("offset ") int offset,
+                                                @Query("category") long category,
+                                                @Query("sort") String sortType);
 }

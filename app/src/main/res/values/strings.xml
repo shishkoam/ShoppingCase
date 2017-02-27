@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">SimplePromClient</string>
-    <string name="action_settings">Settings</string>
     <string name="network_error">Возникли проблемы при получении данных! Проверьте подключение к интернету.</string>
     <string name="search">Поиск</string>
     <string name="change_list">Сменить вид листа</string>
@@ -9,5 +8,6 @@
     <string name="buy">Купить</string>
     <string name="default_product_name">Нет названия товара</string>
     <string name="default_price">0.00 / 0.00 грн</string>
-
+    <string name="graphiql_body">query[{:catalog [:possible_sorts {:results [:id :name :price_currency :discounted_price :price :url_main_image_200x200 ]}]}]</string>
+    <string name="sort_by">Сортировать по</string>
 </resources>

@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -15,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.yo.shishkoam.simplepromclient.adapters.ProductLayoutType;
 import com.yo.shishkoam.simplepromclient.adapters.ProductsRVAdapter;
 import com.yo.shishkoam.simplepromclient.api.ApiRequest;
@@ -25,9 +25,11 @@ import com.yo.shishkoam.simplepromclient.model.ProductsModel;
 import com.yo.shishkoam.simplepromclient.model.Result;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -35,7 +37,6 @@ import retrofit2.Response;
 public class MainActivity extends ProductsActivity {
 
     private List<Result> productsList;
-    private List<String> sortTypeList;
     private RecyclerView productsRecyclerView;
     private ProductsDbHelper productsCacheHelper;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -52,12 +53,12 @@ public class MainActivity extends ProductsActivity {
         setSupportActionBar(toolbar);
         bottomProgress = findViewById(R.id.request_progress);
         sortSpinner = (Spinner) findViewById(R.id.sort_spinner);
-        initSpinner();
+        initSpinner(null);
 
         apiRequest = new ApiRequest(60, 0, 35402, "price");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(view ->{
+        fab.setOnClickListener(view -> {
             Intent intent = new Intent(this, FavoritesActivity.class);
             startActivity(intent);
         });
@@ -69,22 +70,40 @@ public class MainActivity extends ProductsActivity {
         initProductsRecyclerView();
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
-        swipeRefreshLayout.setOnRefreshListener(() -> requestProducts());
+        swipeRefreshLayout.setOnRefreshListener(this::requestProducts);
 
         requestProducts();
     }
 
-    private void initSpinner() {
-        String[] sortValues = getResources().getStringArray(R.array.sort_values);
-        String[] sortTypes = getResources().getStringArray(R.array.sort_ids);
+    private void initSpinner(List<String> sortTypeList) {
+        List<String> sortValues = new ArrayList<>();
+        final List<String> sortTypesList;
+        String[] allSortValuesArray = getResources().getStringArray(R.array.sort_ids);
+        List<String> allSortTypesArray = Arrays.asList(getResources().getStringArray(R.array.sort_values));
+        if (sortTypeList != null) {
+            sortTypesList = new ArrayList<>();
+            for (String sortType : sortTypeList) {
+                sortType = sortType.replace("-", "");
+                if (!sortValues.contains(sortType)) {
+                    sortTypeList.add(sortType);
+                    sortValues.add(allSortValuesArray[allSortTypesArray.indexOf(sortType)]);
+                }
+            }
+        } else {
+            sortValues = Arrays.asList(allSortValuesArray);
+            sortTypesList = allSortTypesArray;
+        }
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, sortValues);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sortSpinner.setAdapter(adapter);
         sortSpinner.setSelection(1);
         sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
-                apiRequest.setSortType(sortTypes[position]);
+                apiRequest.setSortType(sortTypesList.get(position));
+                requestProducts();
             }
 
             @Override
@@ -96,14 +115,16 @@ public class MainActivity extends ProductsActivity {
     @Override
     protected void initProductsRecyclerView() {
         ProductLayoutType type = getRecyclerViewType(productsRecyclerView);
-        ProductsRVAdapter adapter = new ProductsRVAdapter(productsList, type);
+        ProductsRVAdapter adapter = new ProductsRVAdapter(this, productsList, type);
         productsRecyclerView.setAdapter(adapter);
         productsRecyclerView.setItemAnimator(new SlideInUpAnimator());
 
         productsRecyclerView.setOnFlingListener(new RecyclerView.OnFlingListener() {
             @Override
             public boolean onFling(int velocityX, int velocityY) {
-                if (!productsRecyclerView.canScrollVertically(1) && velocityY > 0) {
+                if (!productsRecyclerView.canScrollVertically(1) && velocityY > 0
+                        && bottomProgress.getVisibility() == View.GONE
+                        && !swipeRefreshLayout.isRefreshing()) {
                     requestProductsToAdd();
                     return true;
                 }
@@ -114,7 +135,9 @@ public class MainActivity extends ProductsActivity {
         productsRecyclerView.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
             @Override
             public void onChildViewAttachedToWindow(View view) {
-                if (!productsRecyclerView.canScrollVertically(1)) {
+                if (!productsRecyclerView.canScrollVertically(1)
+                        && bottomProgress.getVisibility() == View.GONE
+                        && !swipeRefreshLayout.isRefreshing()) {
                     requestProductsToAdd();
                 }
             }
@@ -124,7 +147,6 @@ public class MainActivity extends ProductsActivity {
 
             }
         });
-
     }
 
     @Override
@@ -146,6 +168,11 @@ public class MainActivity extends ProductsActivity {
 
     private void requestProducts() {
         showProgress(true);
+        RequestBody body = null;
+        Gson gson = new Gson();
+        String jsonObject = gson.toJson(new ProductsModel());
+        body = RequestBody.create(okhttp3.MediaType.parse("application/json; charset=utf-8"), getString(R.string.graphiql_body));
+
         //empty strings says that we request history for whole period
         App.getApi().getProducts(apiRequest.getLimit(), apiRequest.getOffset(),
                 apiRequest.getCategory(), apiRequest.getSortType()).enqueue(new Callback<ProductsModel>() {
@@ -154,7 +181,7 @@ public class MainActivity extends ProductsActivity {
                 if (response.code() == SUCCESS_CODE && response.body() != null) {
                     Catalog catalog = response.body().getCatalog();
                     productsList = catalog.getResults();
-                    sortTypeList = catalog.getPossibleSorts();
+                    initSpinner(catalog.getPossibleSorts());
                     ProductsRVAdapter adapter = ((ProductsRVAdapter) productsRecyclerView.getAdapter());
                     adapter.setProductList(productsList);
                     adapter.notifyDataSetChanged();
@@ -187,7 +214,6 @@ public class MainActivity extends ProductsActivity {
                     Catalog catalog = response.body().getCatalog();
                     List<Result> newProductsList = catalog.getResults();
                     productsList.addAll(newProductsList);
-                    sortTypeList = catalog.getPossibleSorts();
                     ProductsRVAdapter adapter = ((ProductsRVAdapter) productsRecyclerView.getAdapter());
                     adapter.addProducts(newProductsList);
                     adapter.notifyDataSetChanged();
